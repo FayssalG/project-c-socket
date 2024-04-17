@@ -203,7 +203,7 @@ app.post('/message-deleted' , (req , res)=>{
     res.send('ok');
 });
 
-const port = 5000
+const port = process.env.PORT || 5000
 server.listen(port , ()=>{
     console.log('Listenning on  *:'+port)
 })
