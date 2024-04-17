@@ -15,7 +15,7 @@ const server = http.createServer(app)
 //Change this in prod
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
-const BACKEND_URL = 'https://project-c-backend.vercel.app';  //'https://192.168.1.13:8000'
+const BACKEND_URL = 'https://project-c-backend.vercel.app/_api';  //'https://192.168.1.13:8000'
 const backend = axios.create({
     baseURL : BACKEND_URL,
 })
@@ -38,7 +38,7 @@ io.on('connection' , (socket)=>{
     socket.join(username);
 
     global.io.emit('online-status-change' , {userId,onlineStatus:'online'});
-    backend.get(`/api/user/online-status?user_id=${userId}&online_status=online`)
+    backend.get(`/user/online-status?user_id=${userId}&online_status=online`)
     .catch((err)=>console.log(err.response))
     
     socket.on('disconnect' , ()=>{
