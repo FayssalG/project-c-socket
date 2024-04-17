@@ -2,7 +2,7 @@ const fs = require('fs')
 const fns = require('date-fns');
 const axios = require('axios')
 const express = require('express')
-const https = require('https')
+const http = require('http')
 const {Server} = require('socket.io')
 const app = express()
 
@@ -10,7 +10,7 @@ const app = express()
 // const cert = fs.readFileSync('devCert.crt');
 // const server = https.createServer({key,cert},app)
 
-const server = https.createServer(app)
+const server = http.createServer(app)
 
 //Change this in prod
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
@@ -206,4 +206,8 @@ app.post('/message-deleted' , (req , res)=>{
 const port = process.env.PORT || 5000
 server.listen(port , ()=>{
     console.log('Listenning on  *:'+port)
+})
+
+app.get('/' , (req,res)=>{
+    res.send('Up and running');
 })
