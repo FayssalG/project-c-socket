@@ -13,9 +13,9 @@ const app = express()
 const server = https.createServer(app)
 
 //Change this in prod
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
-const BACKEND_URL = 'https://192.168.1.13:8000'
+const BACKEND_URL = 'https://project-c-backend.vercel.app';  //'https://192.168.1.13:8000'
 const backend = axios.create({
     baseURL : BACKEND_URL,
 })
