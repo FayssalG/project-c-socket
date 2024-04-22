@@ -3,6 +3,7 @@ const fns = require('date-fns');
 const axios = require('axios')
 const express = require('express')
 const http = require('http')
+// const https = require('https')
 const {Server} = require('socket.io')
 const app = express()
 
@@ -14,8 +15,9 @@ const server = http.createServer(app)
 
 //Change this in prod
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+/*......................*/
 
-const BACKEND_URL = 'https://project-c-backend.vercel.app/_api';  //'https://192.168.1.13:8000'
+const BACKEND_URL = 'https://project-c-backend.vercel.app/_api'  /*'https://192.168.1.13:8000/_api'*/;
 const backend = axios.create({
     baseURL : BACKEND_URL,
 })
@@ -32,10 +34,14 @@ const io = new Server(server , {
 
 global.io = io
 
+const connectedUsersSockets = new Map();
+
 io.on('connection' , (socket)=>{
-    const {userId , username} = socket.handshake.query
+    const {userId , username , groupIds} = socket.handshake.query
     console.log(socket.handshake.query)
-    socket.join(username);
+    const groupIdsArr = [...groupIds].filter(gId=>Number(gId)!=NaN).map((gId)=>Number(gId))
+    socket.join([username , ...groupIdsArr]);
+    connectedUsersSockets.set(userId , socket);
 
     global.io.emit('online-status-change' , {userId,onlineStatus:'online'});
     backend.get(`/user/online-status?user_id=${userId}&online_status=online`)
@@ -52,60 +58,7 @@ io.on('connection' , (socket)=>{
 
 
 
-    //handling calls
-    // socket.on('call' , ({from , to , signal })=>{
-    //     io.in(to).emit('receiving-call' , {from , signal })
-    // })
-
-    // socket.on('end' , (to)=>{
-    //     io.in(to).emit('call-ended');
-    // })
-   
-    // socket.on('answer' , ({to , signal})=>{
-    //     io.in(to).emit('call-accepted' , signal)
-    // })
-    
-    // socket.on('reject' , (to)=>{
-    //     const message = 'Call Rejected'
-    //     io.in(to).emit('call-rejected' , message)
-    // })
-
-    
-    // socket.on('busy' , (to)=>{
-    //     console.log({to})
-    //     const message = 'User in a call'
-    //     io.in(to).emit('call-rejected' , message)
-    // })
-    
-
-    // // Video callls
-
-    // socket.on('video-call' , ({from , to , signal })=>{
-    //     io.in(to).emit('receiving-video-call' , {from , signal })
-    // })
-
-    // socket.on('end-video-call' , (to)=>{
-    //     console.log(to)
-    //     io.in(to).emit('video-call-ended');
-    // })
-    // socket.on('answer-video-call' , ({to , signal})=>{
-    //     console.log('/////////////////////////////////////////////')
-    //     console.log({signal})
-    //     io.in(to).emit('video-call-accepted' , signal)
-    // })
-    
-    // socket.on('reject-video-call' , (to)=>{
-    //     console.log(to)
-    //     io.in(to).emit('video-call-rejected')
-    // })
-    
-    // socket.on('busy-video-call' , (to)=>{
-    //     console.log(to)
-    //     const message = 'User in a call'
-    //     io.in(to).emit('video-call-rejected' , message)
-    // })
-
-    
+    //handling calls    
     socket.on('call' , ({from , to , signal , callType })=>{
         console.log({callType})
         io.in(to).emit('receiving-call' , {from , signal , callType })
@@ -193,13 +146,52 @@ app.post('/messages-seen' , (req , res)=>{
     res.send('ok');
 });
 
+
+
 app.post('/message-updated' , (req , res)=>{
     global.io.in(req.body.to).emit('message-updated' , {message:req.body.message} );
     res.send('ok');
 });
 
+
 app.post('/message-deleted' , (req , res)=>{
     global.io.in(req.body.to).emit('message-deleted' , {message:req.body.message} );
+    res.send('ok');
+});
+
+
+
+app.post('/groups/members-added' , (req , res)=>{
+    console.log({ids:req.body.new_members_ids})
+    req.body.new_members_ids.forEach(id => {
+    
+        const socket = connectedUsersSockets.get(id.toString());
+        console.log({socket})
+        socket?.join(req.body.toGroup);
+    });
+    global.io.in(req.body.toGroup).emit('members-added-to-group');
+    res.send('ok');
+});
+
+app.post('/groups/member-removed' , (req , res)=>{
+    global.io.in(req.body.toGroup).emit('member-removed-from-group');
+    res.send('ok');
+});
+
+
+app.post('/groups/message-sent' , (req , res)=>{
+    console.log({BODY:req.body})
+    global.io.in(req.body.toGroup).emit('group-message-received' , {groupMessage:req.body.groupMessage} );
+    res.send('ok');
+});
+
+app.post('/groups/message-updated' , (req , res)=>{
+    global.io.in(req.body.toGroup).emit('group-message-updated' , {groupMessage:req.body.groupMessage} );
+    res.send('ok');
+});
+
+app.post('/groups/message-deleted' , (req , res)=>{
+    global.io.in(req.body.toGroup).emit('group-message-deleted' , {groupMessage:req.body.groupMessage} );
     res.send('ok');
 });
 
