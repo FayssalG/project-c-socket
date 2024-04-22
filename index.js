@@ -52,7 +52,7 @@ io.on('connection' , (socket)=>{
        
         global.io.emit('online-status-change' , {userId,onlineStatus});
        
-        backend.get(`/api/user/online-status?user_id=${userId}&online_status=${onlineStatus}` )
+        backend.get(`/user/online-status?user_id=${userId}&online_status=${onlineStatus}` )
         .catch((err)=>console.log(err))
     })
 
