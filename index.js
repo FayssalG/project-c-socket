@@ -163,13 +163,13 @@ app.post('/message-deleted' , (req , res)=>{
 
 app.post('/groups/members-added' , (req , res)=>{
     console.log({ids:req.body.new_members_ids})
+    global.io.in(req.body.toGroup).emit('members-added-to-group');
+
     req.body.new_members_ids.forEach(id => {
-    
         const socket = connectedUsersSockets.get(id.toString());
-        console.log({socket})
+        socket.emit('me-added-to-group' );
         socket?.join(req.body.toGroup);
     });
-    global.io.in(req.body.toGroup).emit('members-added-to-group');
     res.send('ok');
 });
 
